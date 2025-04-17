@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Socket.IO Test</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <style>
+    :root {
+      --primary-color: #4361ee;
+      --secondary-color: #3f37c9;
+      --success-color: #4caf50;
+      --danger-color: #f44336;
+      --warning-color: #ff9800;
+      --light-color: #f8f9fa;
+      --dark-color: #212529;
+      --gray-color: #6c757d;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    body {
+      background-color: #f5f7ff;
+      color: var(--dark-color);
+      line-height: 1.6;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+    }
+    
+    h1 {
+      text-align: center;
+      color: var(--primary-color);
+      margin-bottom: 30px;
+      font-size: 28px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-control {
+      width: 100%;
+      padding: 10px 15px;
+      border: 1px solid #ced4da;
+      border-radius: 5px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+    
+    .form-control:focus {
+      border-color: var(--primary-color);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--gray-color);
+    }
+    
+    .btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    
+    .btn-primary:hover:not(:disabled) {
+      background-color: var(--secondary-color);
+    }
+    
+    .btn-success {
+      background-color: var(--success-color);
+      color: white;
+    }
+    
+    .btn-success:hover:not(:disabled) {
+      background-color: #388e3c;
+    }
+    
+    .btn-danger {
+      background-color: var(--danger-color);
+      color: white;
+    }
+    
+    .btn-danger:hover:not(:disabled) {
+      background-color: #d32f2f;
+    }
+    
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .connection-section {
+      background-color: rgba(67, 97, 238, 0.05);
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    
+    .notification-section {
+      background-color: rgba(76, 175, 80, 0.05);
+      padding: 20px;
+      border-radius: 8px;
+    }
+    
+    .output-container {
+      margin-top: 30px;
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid #dee2e6;
+      border-radius: 5px;
+      padding: 15px;
+      background-color: #f8f9fa;
+    }
+    
+    .output-container p {
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 5px;
+      background-color: white;
+      border-left: 4px solid var(--gray-color);
+    }
+    
+    .output-container p.success {
+      border-left-color: var(--success-color);
+      background-color: rgba(76, 175, 80, 0.1);
+    }
+    
+    .output-container p.error {
+      border-left-color: var(--danger-color);
+      background-color: rgba(244, 67, 54, 0.1);
+    }
+    
+    .output-container p.info {
+      border-left-color: var(--primary-color);
+      background-color: rgba(67, 97, 238, 0.1);
+    }
+    
+    .output-container p.warning {
+      border-left-color: var(--warning-color);
+      background-color: rgba(255, 152, 0, 0.1);
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        padding: 20px;
+      }
+      
+      .btn-group {
+        flex-direction: column;
+      }
+      
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Socket.IO WebSocket Test</h1>
+    
+    <div class="connection-section">
+      <div class="form-group">
+        <label for="token">Authentication Token</label>
+        <input type="text" id="token" class="form-control" placeholder="Enter your JWT token">
+      </div>
+      
+      <div class="btn-group">
+        <button id="connect-btn" class="btn btn-primary">Connect</button>
+        <button id="send-btn" class="btn btn-success" disabled>Register Online</button>
+        <button id="close-btn" class="btn btn-danger" disabled>Disconnect</button>
+      </div>
+    </div>
+    
+    <div class="notification-section">
+      <div class="form-group">
+        <label for="msg">Message</label>
+        <input type="text" id="msg" class="form-control" placeholder="Enter your message">
+      </div>
+      
+      <div class="form-group">
+        <label for="recipientId">Recipient ID</label>
+        <input type="text" id="recipientId" class="form-control" placeholder="Enter recipient's ID">
+      </div>
+      
+      <button id="send" class="btn btn-primary">Send Notification</button>
+    </div>
+    
+    <div class="output-container" id="output">
+      <p class="info">Connection status and notifications will appear here...</p>
+    </div>
+  </div>
+
+  <script>
+    const connectBtn = document.getElementById('connect-btn');
+    const sendBtn = document.getElementById('send-btn');
+    const sendMsg = document.getElementById('send');
+    const closeBtn = document.getElementById('close-btn');
+    const outputDiv = document.getElementById('output');
+    const tokenInput = document.getElementById('token');
+    const msgInput = document.getElementById('msg');
+    const recipientIdInput = document.getElementById('recipientId');
+
+    let socket;
+
+    // Helper function to add messages to output with appropriate styling
+    function addMessage(message, type = 'info') {
+      const p = document.createElement('p');
+      p.className = type;
+      p.innerHTML = message;
+      outputDiv.appendChild(p);
+      outputDiv.scrollTop = outputDiv.scrollHeight; // Auto-scroll to bottom
+    }
+
+    // Clear default message when adding first real message
+    function clearDefaultMessage() {
+      if (outputDiv.children.length === 1 && 
+          outputDiv.children[0].textContent === 'Connection status and notifications will appear here...') {
+        outputDiv.innerHTML = '';
+      }
+    }
+
+    connectBtn.addEventListener('click', () => {
+      if (!tokenInput.value) {
+        addMessage('⚠️ Please enter an authentication token', 'warning');
+        return;
+      }
+
+      clearDefaultMessage();
+      addMessage('🔄 Attempting to connect...', 'info');
+      
+      socket = io("http://localhost:5000", {
+        auth: {
+          token: tokenInput.value
+        }
+      });
+
+      socket.on("connect", () => {
+        addMessage(`✅ Connected successfully as ${socket.id}`, 'success');
+        sendBtn.disabled = false;
+        closeBtn.disabled = false;
+      });
+
+      socket.on("notification", (data) => {
+        addMessage(`🔔 Notification received from ${data.sender} : ${data.message}`, 'info');
+      });
+
+      socket.on("disconnect", () => {
+        addMessage('❌ Disconnected from server', 'error');
+        sendBtn.disabled = true;
+        closeBtn.disabled = true;
+      });
+
+      socket.on("connect_error", (err) => {
+        addMessage(`⚠️ Connection error: ${err.message}`, 'warning');
+      });
+    });
+
+    sendBtn.addEventListener('click', () => {
+      addMessage('🟢 Registering as online...', 'info');
+      socket.emit("register");
+    });
+
+    closeBtn.addEventListener('click', () => {
+      addMessage('🔄 Disconnecting from server...', 'info');
+      socket.disconnect();
+    });
+
+    // Add functionality for the send button to make a POST request
+    sendMsg.addEventListener('click', async () => {
+      const message = msgInput.value;
+      const recipientId = recipientIdInput.value;
+      const token = tokenInput.value;
+      
+      if (!message || !recipientId || !token) {
+        addMessage('⚠️ Please provide message, recipient ID, and token', 'warning');
+        return;
+      }
+      
+      addMessage('🔄 Sending notification...', 'info');
+      
+      try {
+        const response = await fetch('http://localhost:5000/api/notifications/send', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            message: message,
+            recipientIds: [recipientId]
+          })
+        });
+        
+        const data = await response.json();
+        console.log(data);
+        
+        if (response.ok) {
+          addMessage(`✅ Notification sent successfully to ${data.data.recipients} with message ${data.data.message}`, 'success');
+          // Clear the message input after successful send
+          msgInput.value = '';
+        } else {
+          addMessage(`❌ Error sending notification: ${data.message || 'Unknown error'}`, 'error');
+        }
+      } catch (error) {
+        addMessage(`❌ Error: ${error.message}`, 'error');
+      }
+    });
+  </script>
+</body>
+</html>
